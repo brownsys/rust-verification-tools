@@ -77,13 +77,19 @@ unsafe fn get_value_usize(x: usize) -> usize {
 macro_rules! make_verifier_nondet {
     ($typ:ident, $get_value:ident) => {
         impl VerifierNonDet for $typ {
-            fn verifier_nondet(self) -> Self {
+            fn verifier_nondet(self, name: String) -> Self {
                 let mut r = self;
                 unsafe {
                     let data: *mut u8 = &mut r as *mut $typ as *mut u8;
                     let length = core::mem::size_of::<$typ>();
-                    let null = 0 as *const i8;
-                    klee_make_symbolic(data, length, null)
+                    // let null = 0 as *const i8;
+					// klee_make_symbolic(data, length, null)
+
+					use std::ffi::{CString, CStr};
+					use cstr_core::c_char;
+					let cstring = CString::new(name).expect("CString::new failed");
+    				let cstr = CStr::from_bytes_with_nul_unchecked(cstring.to_bytes_with_nul());
+                    klee_make_symbolic(data, length, cstr.as_ptr() as *const c_char)
                 }
                 return r;
             }
@@ -117,8 +123,8 @@ make_verifier_nondet!(f32, klee_get_value_f);
 make_verifier_nondet!(f64, klee_get_value_d);
 
 impl VerifierNonDet for bool {
-    fn verifier_nondet(self) -> Self {
-        let c = VerifierNonDet::verifier_nondet(0u8);
+    fn verifier_nondet(self, name: String) -> Self {
+        let c = VerifierNonDet::verifier_nondet(0u8, name);
         assume(c == 0 || c == 1);
         c == 1
     }

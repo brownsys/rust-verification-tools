@@ -21,7 +21,7 @@ use crate::verifier::assume;
 ///
 /// This is intended to be compatible with SMACK
 pub trait VerifierNonDet {
-    fn verifier_nondet(self) -> Self;
+    fn verifier_nondet(self, name: String) -> Self;
 
     #[cfg(feature = "verifier-klee")]
     /// Obtain a concrete value satisfying the constraints
@@ -47,14 +47,7 @@ pub trait VerifierNonDet {
 
 pub trait AbstractValue: Sized {
     /// Create an abstract value of type `Self`
-    fn abstract_value() -> Self;
-
-    /// Create an abstract value satisfying a predicate `F`
-    fn abstract_where<F: FnOnce(&Self) -> bool>(f: F) -> Self {
-        let x = Self::abstract_value();
-        assume(f(&x));
-        x
-    }
+    fn abstract_value(name: String) -> Self;
 }
 
 /// Create a symbolic value of type `Self` and with
@@ -62,10 +55,10 @@ pub trait AbstractValue: Sized {
 ///
 /// This is intended to be compatible with Crux-MIR.
 pub trait Symbolic: Sized {
-    fn symbolic(desc: &'static str) -> Self;
+    fn symbolic(desc: &'static str, name: String) -> Self;
 
     fn symbolic_where<F: FnOnce(&Self) -> bool>(desc: &'static str, f: F) -> Self {
-        let x = Self::symbolic(desc);
+        let x = Self::symbolic(desc, "".to_string());
         assume(f(&x));
         x
     }

@@ -37,16 +37,16 @@ pub use smack::*;
 
 #[cfg(feature = "std")]
 /// Allocate a symbolic vector of bytes
-pub fn verifier_nondet_bytes(n: usize) -> Vec<u8> {
+pub fn verifier_nondet_bytes(n: usize, name: String) -> Vec<u8> {
     let mut v: Vec<u8> = Vec::with_capacity(n);
-    v.resize_with(n, || VerifierNonDet::verifier_nondet(0u8));
+    v.resize_with(n, || VerifierNonDet::verifier_nondet(0u8, name.clone()));
     return v;
 }
 
 #[cfg(feature = "std")]
 /// Allocate a symbolic CString
-pub fn verifier_nondet_cstring(size_excluding_null: usize) -> CString {
-    let mut r = verifier_nondet_bytes(size_excluding_null + 1);
+pub fn verifier_nondet_cstring(size_excluding_null: usize, name: String) -> CString {
+    let mut r = verifier_nondet_bytes(size_excluding_null + 1, name);
     for i in 0..size_excluding_null {
         assume(r[i] != 0u8);
     }
@@ -57,8 +57,8 @@ pub fn verifier_nondet_cstring(size_excluding_null: usize) -> CString {
 #[cfg(feature = "std")]
 /// Allocate a symbolic ASCII String
 /// (ASCII strings avoid the complexity of UTF-8)
-pub fn verifier_nondet_ascii_string(n: usize) -> String {
-    let r = verifier_nondet_bytes(n);
+pub fn verifier_nondet_ascii_string(n: usize, name: String) -> String {
+    let r = verifier_nondet_bytes(n, name);
     for i in 0..n {
         assume(r[i] != 0u8);
         assume(r[i].is_ascii());
@@ -70,14 +70,14 @@ pub fn verifier_nondet_ascii_string(n: usize) -> String {
 }
 
 impl<T: VerifierNonDet + Default> AbstractValue for T {
-    fn abstract_value() -> Self {
-        Self::verifier_nondet(Self::default())
+    fn abstract_value(name: String) -> Self {
+        Self::verifier_nondet(Self::default(), name)
     }
 }
 
 impl<T: VerifierNonDet + Default> Symbolic for T {
-    fn symbolic(_desc: &'static str) -> Self {
-        Self::verifier_nondet(Self::default())
+    fn symbolic(_desc: &'static str, name: String) -> Self {
+        Self::verifier_nondet(Self::default(), name)
     }
 }
 
